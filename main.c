@@ -79,13 +79,22 @@ static void activate_application(GtkApplication *app, gpointer user_data) {
     monitor = gdk_display_get_primary_monitor(display);
 
     if (!monitor) { // Fallback: try to get the monitor the window is on, or first monitor
-        monitor = gdk_display_get_monitor_at_widget(display, window);
-        if (!monitor) {
+        GtkNative *native = gtk_widget_get_native(window);
+        GdkSurface *surface = NULL;
+        if (native) {
+            surface = gtk_native_get_surface(native);
+        }
+        if (surface) {
+            monitor = gdk_surface_get_monitor(surface);
+        }
+
+        if (!monitor) { // If still no monitor, try the first from the list
             GListModel *monitors = gdk_display_get_monitors(display);
-            if (g_list_model_get_n_items(monitors) > 0) {
+            // GListModel from gdk_display_get_monitors is owned by the display, no unref needed for 'monitors'.
+            // The item obtained from g_list_model_get_item is also not owned by us.
+            if (monitors && g_list_model_get_n_items(monitors) > 0) {
                 monitor = GDK_MONITOR(g_list_model_get_item(monitors, 0));
             }
-            // GListModel and its items are not owned by us here, no unref needed for g_list_model_get_item result
         }
     }
 
