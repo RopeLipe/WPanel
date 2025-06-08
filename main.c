@@ -28,11 +28,11 @@ static void apply_css_styling(GtkWidget *widget) {
     GtkCssProvider *provider = gtk_css_provider_new();
     const char *css =
         "window#time_panel_window {"
-        "   background-color: transparent;"
+        "   background-color: red; /* Test with a solid color */"
         "}"
         "label#time_label {"
-        "   background-color: transparent;"
-        "   color: white;"
+        "   background-color: yellow; /* Test with a different solid color */"
+        "   color: black;"
         "   font-size: 28px;"
         "   font-weight: bold;"
         "}";
@@ -51,73 +51,57 @@ static void activate_application(GtkApplication *app, gpointer user_data) {
     GtkWidget *window;
     GtkWidget *center_box;
     GdkDisplay *display;
-    GdkMonitor *monitor;
+    GdkMonitor *monitor = NULL; // Initialize monitor
     GdkRectangle geometry;
-    int screen_width;
-    int screen_x_offset;
-    int screen_y_offset;
-    const int panel_height = 40; // Desired panel height in pixels
+    int screen_width = 300; // Test with a fixed small width
+    int screen_x_offset = 50; // Test with some offset
+    int screen_y_offset = 50; // Test with some offset
+    const int panel_height = 100; // Test with a fixed small height
 
     window = gtk_application_window_new(app);
-    gtk_window_set_title(GTK_WINDOW(window), "Time Panel");
-    gtk_widget_set_name(window, "time_panel_window"); // Name for CSS targeting
+    gtk_window_set_title(GTK_WINDOW(window), "Test Panel");
+    gtk_widget_set_name(window, "time_panel_window");
 
-    // Make the window transparent and allow custom drawing - gtk_widget_set_app_paintable is removed in newer GTK4
-    // CSS is now the primary way to handle transparency for the window background.
-    
     // Apply CSS for transparency and text styling
     // Connect to "realize" signal to ensure display is available for CSS provider
     g_signal_connect(window, "realize", G_CALLBACK(apply_css_styling), NULL);
 
+    gtk_window_set_decorated(GTK_WINDOW(window), FALSE);
+    // gtk_window_set_keep_above(GTK_WINDOW(window), TRUE); // Commented out based on user feedback
 
-    // Configure window to behave like a panel
-    gtk_window_set_decorated(GTK_WINDOW(window), FALSE);  // No window decorations (title bar, borders)
-    // gtk_window_set_keep_above(GTK_WINDOW(window), TRUE); // User claims this is removed. If so, window may not stay on top.
+    // Determine screen geometry for positioning - All related functions commented out based on user feedback
+    // display = gtk_widget_get_display(window);
+    // monitor = gdk_display_get_primary_monitor(display);
 
-    // Determine screen geometry for positioning
-    display = gtk_widget_get_display(window);
-    // monitor = gdk_display_get_primary_monitor(display); // User claims this is removed.
+    // if (!monitor) {
+    //     GtkNative *native = gtk_widget_get_native(window);
+    //     GdkSurface *surface = NULL;
+    //     if (native) {
+    //         surface = gtk_native_get_surface(native);
+    //     }
+    //     if (surface) {
+    //         // monitor = gdk_surface_get_monitor(surface);
+    //     }
+    //     if (!monitor) {
+    //         GListModel *monitors = gdk_display_get_monitors(display);
+    //         if (monitors && g_list_model_get_n_items(monitors) > 0) {
+    //             monitor = GDK_MONITOR(g_list_model_get_item(monitors, 0));
+    //         }
+    //     }
+    // }
 
-    if (!monitor) { // Fallback: try to get the monitor the window is on, or first monitor
-        GtkNative *native = gtk_widget_get_native(window);
-        GdkSurface *surface = NULL;
-        if (native) {
-            surface = gtk_native_get_surface(native);
-        }
-        if (surface) {
-            // monitor = gdk_surface_get_monitor(surface); // User claims this is removed.
-        }
-
-        if (!monitor) { // If still no monitor, try the first from the list
-            GListModel *monitors = gdk_display_get_monitors(display);
-            // GListModel from gdk_display_get_monitors is owned by the display, no unref needed for 'monitors'.
-            // The item obtained from g_list_model_get_item is also not owned by us.
-            if (monitors && g_list_model_get_n_items(monitors) > 0) {
-                monitor = GDK_MONITOR(g_list_model_get_item(monitors, 0));
-            }
-        }
-    }
-
-    if (monitor) {
-        gdk_monitor_get_geometry(monitor, &geometry);
-        screen_width = geometry.width;
-        screen_x_offset = geometry.x; // X position of the monitor
-        screen_y_offset = geometry.y; // Y position of the monitor (usually 0 for primary top)
-    } else {
-        // Fallback if monitor information is unavailable
-        g_warning("Could not determine monitor geometry. Using default size and position.");
-        screen_width = 600; // Default width
-        screen_x_offset = 0;
-        screen_y_offset = 0;
-    }
+    // if (monitor) {
+    //     gdk_monitor_get_geometry(monitor, &geometry);
+    //     screen_width = geometry.width;
+    //     screen_x_offset = geometry.x;
+    //     screen_y_offset = geometry.y;
+    // } else {
+    //     g_warning("Could not determine monitor geometry. Using default test size and position.");
+    //     // Using fixed test values defined above
+    // }
 
     gtk_window_set_default_size(GTK_WINDOW(window), screen_width, panel_height);
-    // For Wayland/X11, (0,0) relative to monitor is usually what's desired for top-left.
-    // gtk_window_move is less reliable across compositors for exact "top of screen"
-    // For panels, layer-shell protocols (Wayland) or EWMH struts (X11) are used.
-    // This positions it at the top of the specific monitor's area.
-    // gtk_window_move(GTK_WINDOW(window), screen_x_offset, screen_y_offset); // User claims this is removed. Window may appear at default position.
-
+    // gtk_window_move(GTK_WINDOW(window), screen_x_offset, screen_y_offset); // Commented out
 
     // Create the time label
     widgets->time_label = GTK_LABEL(gtk_label_new(NULL));
