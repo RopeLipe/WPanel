@@ -62,8 +62,8 @@ static void activate_application(GtkApplication *app, gpointer user_data) {
     gtk_window_set_title(GTK_WINDOW(window), "Time Panel");
     gtk_widget_set_name(window, "time_panel_window"); // Name for CSS targeting
 
-    // Make the window transparent and allow custom drawing
-    gtk_widget_set_app_paintable(window, TRUE);
+    // Make the window transparent and allow custom drawing - gtk_widget_set_app_paintable is removed in newer GTK4
+    // CSS is now the primary way to handle transparency for the window background.
     
     // Apply CSS for transparency and text styling
     // Connect to "realize" signal to ensure display is available for CSS provider
@@ -72,11 +72,11 @@ static void activate_application(GtkApplication *app, gpointer user_data) {
 
     // Configure window to behave like a panel
     gtk_window_set_decorated(GTK_WINDOW(window), FALSE);  // No window decorations (title bar, borders)
-    gtk_window_set_keep_above(GTK_WINDOW(window), TRUE); // Keep the panel window always on top
+    // gtk_window_set_keep_above(GTK_WINDOW(window), TRUE); // User claims this is removed. If so, window may not stay on top.
 
     // Determine screen geometry for positioning
     display = gtk_widget_get_display(window);
-    monitor = gdk_display_get_primary_monitor(display);
+    // monitor = gdk_display_get_primary_monitor(display); // User claims this is removed.
 
     if (!monitor) { // Fallback: try to get the monitor the window is on, or first monitor
         GtkNative *native = gtk_widget_get_native(window);
@@ -85,7 +85,7 @@ static void activate_application(GtkApplication *app, gpointer user_data) {
             surface = gtk_native_get_surface(native);
         }
         if (surface) {
-            monitor = gdk_surface_get_monitor(surface);
+            // monitor = gdk_surface_get_monitor(surface); // User claims this is removed.
         }
 
         if (!monitor) { // If still no monitor, try the first from the list
@@ -116,7 +116,7 @@ static void activate_application(GtkApplication *app, gpointer user_data) {
     // gtk_window_move is less reliable across compositors for exact "top of screen"
     // For panels, layer-shell protocols (Wayland) or EWMH struts (X11) are used.
     // This positions it at the top of the specific monitor's area.
-    gtk_window_move(GTK_WINDOW(window), screen_x_offset, screen_y_offset);
+    // gtk_window_move(GTK_WINDOW(window), screen_x_offset, screen_y_offset); // User claims this is removed. Window may appear at default position.
 
 
     // Create the time label
